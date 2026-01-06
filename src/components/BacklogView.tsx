@@ -1,17 +1,21 @@
 import { useState } from 'react';
-import { Task, Project, Status, Priority, STATUS_CONFIG, PRIORITY_CONFIG, PERIOD_CONFIG } from '@/types';
+import { Task, Project, Status, Priority, Period, STATUS_CONFIG, PRIORITY_CONFIG, PERIOD_CONFIG } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Filter, SortAsc } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Filter, CalendarIcon } from 'lucide-react';
 import * as Lucide from 'lucide-react';
 import React from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface BacklogViewProps {
   tasks: Task[];
   projects: Project[];
-  onTaskStatusChange: (taskId: string, status: Status) => void;
+  onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
 }
 
 const statusVariants: Record<string, 'backlog' | 'todo' | 'blocked' | 'doing' | 'review' | 'done'> = {
@@ -39,10 +43,12 @@ const projectColorVariants: Record<string, 'projectBlue' | 'projectPurple' | 'pr
   cyan: 'projectCyan',
 };
 
-export function BacklogView({ tasks, projects, onTaskStatusChange }: BacklogViewProps) {
+export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps) {
   const [filterProject, setFilterProject] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [titleValue, setTitleValue] = useState<string>('');
 
   const projectMap = new Map(projects.map(p => [p.id, p]));
 
@@ -65,9 +71,6 @@ export function BacklogView({ tasks, projects, onTaskStatusChange }: BacklogView
     return priorityOrder[a.priority] - priorityOrder[b.priority];
   });
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  };
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -160,47 +163,160 @@ export function BacklogView({ tasks, projects, onTaskStatusChange }: BacklogView
                     )}
                     style={{ animationDelay: `${index * 20}ms` }}
                   >
+                    {/* Título - edição inline */}
                     <td className="py-3 px-4">
-                      <span className={cn(
-                        "font-medium text-sm",
-                        task.status === 'FEITO' && "line-through text-muted-foreground"
-                      )}>
-                        {task.title}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {project && (
-                        <Badge variant={projectColorVariants[project.color]} className="text-[10px]">
-                          {project.name}
-                        </Badge>
+                      {editingTitle === task.id ? (
+                        <Input
+                          value={titleValue}
+                          onChange={(e) => setTitleValue(e.target.value)}
+                          onBlur={() => {
+                            if (titleValue.trim() && titleValue !== task.title) {
+                              onUpdateTask(task.id, { title: titleValue.trim() });
+                            }
+                            setEditingTitle(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              if (titleValue.trim() && titleValue !== task.title) {
+                                onUpdateTask(task.id, { title: titleValue.trim() });
+                              }
+                              setEditingTitle(null);
+                            }
+                            if (e.key === 'Escape') setEditingTitle(null);
+                          }}
+                          className="h-7 text-sm"
+                          autoFocus
+                        />
+                      ) : (
+                        <span 
+                          className={cn(
+                            "font-medium text-sm cursor-pointer hover:text-primary transition-colors",
+                            task.status === 'FEITO' && "line-through text-muted-foreground"
+                          )}
+                          onClick={() => {
+                            setEditingTitle(task.id);
+                            setTitleValue(task.title);
+                          }}
+                        >
+                          {task.title}
+                        </span>
                       )}
                     </td>
+                    
+                    {/* Projeto - select inline */}
                     <td className="py-3 px-4">
-                      <span className={cn(
-                        "text-sm",
-                        isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
-                      )}>
-                        {formatDate(task.deadline)}
-                      </span>
+                      <Select 
+                        value={task.projectId} 
+                        onValueChange={(value) => onUpdateTask(task.id, { projectId: value })}
+                      >
+                        <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
+                          {project && (
+                            <Badge variant={projectColorVariants[project.color]} className="text-[10px] cursor-pointer">
+                              {project.name}
+                            </Badge>
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projects.map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                              <Badge variant={projectColorVariants[p.color]} className="text-[10px]">
+                                {p.name}
+                              </Badge>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
+                    
+                    {/* Prazo - calendário */}
                     <td className="py-3 px-4">
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <PeriodIcon className="w-3 h-3" />
-                        {task.period}
-                      </span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className={cn(
+                            "text-sm flex items-center gap-1 hover:text-primary transition-colors cursor-pointer",
+                            isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
+                          )}>
+                            <CalendarIcon className="w-3 h-3" />
+                            {format(new Date(task.deadline), "dd/MM", { locale: ptBR })}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={new Date(task.deadline)}
+                            onSelect={(date) => {
+                              if (date) {
+                                onUpdateTask(task.id, { deadline: date });
+                              }
+                            }}
+                            className="pointer-events-auto"
+                            locale={ptBR}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </td>
+                    
+                    {/* Período - select inline */}
                     <td className="py-3 px-4">
-                      <Badge variant={priorityVariants[task.priority]} className="text-[10px] flex items-center gap-1">
-                        <PriorityIcon className="w-3 h-3" /> {priorityConfig.label}
-                      </Badge>
+                      <Select 
+                        value={task.period} 
+                        onValueChange={(value) => onUpdateTask(task.id, { period: value as Period })}
+                      >
+                        <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
+                          <span className="text-sm text-muted-foreground flex items-center gap-1 cursor-pointer">
+                            <PeriodIcon className="w-3 h-3" />
+                            {task.period}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(PERIOD_CONFIG).map(([key, config]) => {
+                            const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
+                            return (
+                              <SelectItem key={key} value={key}>
+                                <span className="flex items-center gap-2">
+                                  <Icon className="w-4 h-4" /> {config.label}
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
                     </td>
+                    
+                    {/* Prioridade - select inline */}
+                    <td className="py-3 px-4">
+                      <Select 
+                        value={task.priority} 
+                        onValueChange={(value) => onUpdateTask(task.id, { priority: value as Priority })}
+                      >
+                        <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
+                          <Badge variant={priorityVariants[task.priority]} className="text-[10px] flex items-center gap-1 cursor-pointer">
+                            <PriorityIcon className="w-3 h-3" /> {priorityConfig.label}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(PRIORITY_CONFIG).map(([key, config]) => {
+                            const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
+                            return (
+                              <SelectItem key={key} value={key}>
+                                <span className="flex items-center gap-2">
+                                  <Icon className="w-4 h-4" /> {config.label}
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    
+                    {/* Status - select inline */}
                     <td className="py-3 px-4">
                       <Select 
                         value={task.status} 
-                        onValueChange={(value) => onTaskStatusChange(task.id, value as Status)}
+                        onValueChange={(value) => onUpdateTask(task.id, { status: value as Status })}
                       >
-                        <SelectTrigger className="w-[130px] h-7 text-xs border-0 bg-transparent p-0">
-                          <Badge variant={statusVariants[task.status]} className="text-[10px]">
+                        <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
+                          <Badge variant={statusVariants[task.status]} className="text-[10px] cursor-pointer">
                             {STATUS_CONFIG[task.status].label}
                           </Badge>
                         </SelectTrigger>
