@@ -275,10 +275,12 @@ export function TaskDetailDialog({ task, project, projects, onUpdateTask, onDele
                       <SelectContent>
                         {Object.entries(PERIOD_CONFIG).map(([key, config]) => {
                           const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
+                          const periodColorClass = key === 'Manhã' ? 'text-period-morning' : 
+                                                   key === 'Tarde' ? 'text-period-afternoon' : 'text-period-night';
                           return (
                             <SelectItem key={key} value={key}>
                               <span className="flex items-center gap-2">
-                                <Icon className="w-4 h-4" /> {config.label}
+                                <Icon className={cn("w-4 h-4", periodColorClass)} /> {config.label}
                               </span>
                             </SelectItem>
                           );

@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { getProjectBadgeStyles } from '@/lib/colorUtils';
 import { Filter, CalendarIcon } from 'lucide-react';
 import * as Lucide from 'lucide-react';
 import React from 'react';
@@ -34,13 +35,10 @@ const priorityVariants: Record<string, 'urgent' | 'problematic' | 'important' | 
   'Padrão': 'standard',
 };
 
-const projectColorVariants: Record<string, 'projectBlue' | 'projectPurple' | 'projectGreen' | 'projectOrange' | 'projectPink' | 'projectCyan'> = {
-  blue: 'projectBlue',
-  purple: 'projectPurple',
-  green: 'projectGreen',
-  orange: 'projectOrange',
-  pink: 'projectPink',
-  cyan: 'projectCyan',
+const periodVariants: Record<string, string> = {
+  'Manhã': 'bg-period-morning/20 text-period-morning',
+  'Tarde': 'bg-period-afternoon/20 text-period-afternoon',
+  'Noite': 'bg-period-night/20 text-period-night',
 };
 
 export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps) {
@@ -211,7 +209,10 @@ export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps)
                       >
                         <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
                           {project && (
-                            <Badge variant={projectColorVariants[project.color]} className="text-[10px] cursor-pointer">
+                            <Badge 
+                              className="text-[10px] cursor-pointer border" 
+                              style={getProjectBadgeStyles(project.color)}
+                            >
                               {project.name}
                             </Badge>
                           )}
@@ -219,7 +220,10 @@ export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps)
                         <SelectContent>
                           {projects.map(p => (
                             <SelectItem key={p.id} value={p.id}>
-                              <Badge variant={projectColorVariants[p.color]} className="text-[10px]">
+                              <Badge 
+                                className="text-[10px] border" 
+                                style={getProjectBadgeStyles(p.color)}
+                              >
                                 {p.name}
                               </Badge>
                             </SelectItem>
@@ -263,7 +267,10 @@ export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps)
                         onValueChange={(value) => onUpdateTask(task.id, { period: value as Period })}
                       >
                         <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
-                          <span className="text-sm text-muted-foreground flex items-center gap-1 cursor-pointer">
+                          <span className={cn(
+                            "text-[10px] font-medium flex items-center gap-1 cursor-pointer px-2 py-0.5 rounded-md",
+                            periodVariants[task.period]
+                          )}>
                             <PeriodIcon className="w-3 h-3" />
                             {task.period}
                           </span>
@@ -273,7 +280,10 @@ export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps)
                             const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
                             return (
                               <SelectItem key={key} value={key}>
-                                <span className="flex items-center gap-2">
+                                <span className={cn(
+                                  "flex items-center gap-2 px-2 py-0.5 rounded-md",
+                                  periodVariants[key as Period]
+                                )}>
                                   <Icon className="w-4 h-4" /> {config.label}
                                 </span>
                               </SelectItem>

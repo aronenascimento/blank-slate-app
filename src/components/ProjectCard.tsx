@@ -1,6 +1,7 @@
-import { Project, Task, PROJECT_COLORS } from '@/types';
+import { Project, Task } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { getProjectAccentStyle } from '@/lib/colorUtils';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { ProjectDetailDialog } from './ProjectDetailDialog';
 import { useAppData } from './MainLayout';
@@ -11,15 +12,6 @@ interface ProjectCardProps {
   onClick?: () => void;
 }
 
-// Helper function to determine if the color is a predefined class or a hex code
-const getColorStyle = (color: string) => {
-  if (color.startsWith('#')) {
-    return { backgroundColor: color };
-  }
-  // Fallback for predefined colors (mock data)
-  return { className: PROJECT_COLORS[color] || 'bg-primary' };
-};
-
 export function ProjectCard({ project, tasks, onClick }: ProjectCardProps) {
   const { handleUpdateProject, handleToggleProjectStatus } = useAppData();
   
@@ -28,8 +20,6 @@ export function ProjectCard({ project, tasks, onClick }: ProjectCardProps) {
   const totalTasks = projectTasks.length;
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   const inProgressCount = projectTasks.filter(t => t.status === 'FAZENDO').length;
-  
-  const colorProps = getColorStyle(project.color);
 
   const cardContent = (
     <div
@@ -42,8 +32,8 @@ export function ProjectCard({ project, tasks, onClick }: ProjectCardProps) {
       <AspectRatio ratio={1 / 1} className="p-5">
         {/* Color accent */}
         <div 
-          className={cn("absolute top-0 left-0 w-1 h-full", colorProps.className)}
-          style={colorProps.backgroundColor ? { backgroundColor: colorProps.backgroundColor } : undefined}
+          className="absolute top-0 left-0 w-1 h-full"
+          style={getProjectAccentStyle(project.color)}
         />
         
         <div className="flex flex-col h-full justify-between">
