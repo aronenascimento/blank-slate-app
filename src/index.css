@@ -52,9 +52,9 @@
     --status-done: 145 70% 45%;
 
     /* Period Colors */
-    --period-morning: 45 95% 60%;
+    --period-morning: 48 100% 50%;
     --period-afternoon: 25 95% 55%;
-    --period-night: 250 60% 60%;
+    --period-night: 220 80% 35%;
 
     /* Project accent colors */
     --project-blue: 215 90% 60%;
@@ -65,9 +65,9 @@
     --project-cyan: 185 80% 50%;
 
     /* Gradients */
-    --gradient-morning: linear-gradient(135deg, hsl(45 95% 60% / 0.15), hsl(35 95% 55% / 0.05));
+    --gradient-morning: linear-gradient(135deg, hsl(48 100% 50% / 0.15), hsl(45 95% 55% / 0.05));
     --gradient-afternoon: linear-gradient(135deg, hsl(25 95% 55% / 0.15), hsl(15 95% 50% / 0.05));
-    --gradient-night: linear-gradient(135deg, hsl(250 60% 60% / 0.15), hsl(240 50% 50% / 0.05));
+    --gradient-night: linear-gradient(135deg, hsl(220 80% 35% / 0.15), hsl(220 70% 25% / 0.05));
     --gradient-card: linear-gradient(135deg, hsl(220 16% 12%), hsl(220 16% 10%));
     --gradient-hero: linear-gradient(135deg, hsl(215 90% 60% / 0.2), hsl(280 80% 60% / 0.1));
 

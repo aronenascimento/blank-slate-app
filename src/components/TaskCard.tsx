@@ -1,8 +1,9 @@
-import { Task, Project, PRIORITY_CONFIG, STATUS_CONFIG, Status, Priority } from '@/types';
+import { Task, Project, PRIORITY_CONFIG, STATUS_CONFIG, Status, Priority, Period } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { getProjectBadgeStyles } from '@/lib/colorUtils';
 import * as Lucide from 'lucide-react';
 import { useAppData } from './MainLayout';
 import { TaskDetailDialog } from './TaskDetailDialog';
@@ -17,15 +18,6 @@ interface TaskCardProps {
   onPriorityChange?: (taskId: string, priority: Priority) => void;
   compact?: boolean;
 }
-
-const projectColorVariants: Record<string, 'projectBlue' | 'projectPurple' | 'projectGreen' | 'projectOrange' | 'projectPink' | 'projectCyan'> = {
-  blue: 'projectBlue',
-  purple: 'projectPurple',
-  green: 'projectGreen',
-  orange: 'projectOrange',
-  pink: 'projectPink',
-  cyan: 'projectCyan',
-};
 
 const priorityVariants: Record<string, 'urgent' | 'problematic' | 'important' | 'standard'> = {
   'Urgente': 'urgent',
@@ -146,8 +138,8 @@ export function TaskCard({ task, project, onStatusChange, onPriorityChange, comp
             {/* Project Badge */}
             {project && (
               <Badge 
-                variant={projectColorVariants[project.color] || 'default'} 
-                className="shrink-0 text-[10px] px-1.5 py-0.5"
+                className="shrink-0 text-[10px] px-1.5 py-0.5 border"
+                style={getProjectBadgeStyles(project.color)}
               >
                 {project.name}
               </Badge>

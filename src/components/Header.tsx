@@ -37,7 +37,8 @@ export function Header({ overdueCount }: HeaderProps) {
     const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
     
     // Use the period color variable for the icon color
-    const colorClass = `text-period-${period.toLowerCase()}`;
+    const colorClass = period === 'Manhã' ? 'text-period-morning' :
+                       period === 'Tarde' ? 'text-period-afternoon' : 'text-period-night';
 
     return { greeting, Icon, colorClass };
   };

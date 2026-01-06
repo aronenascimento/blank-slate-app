@@ -36,7 +36,12 @@ export function PeriodColumn({ period, tasks, projects, onTaskStatusChange, onTa
       onDragLeave={handleDragLeave}
     >
       <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-5 h-5 text-foreground" />
+        <Icon className={cn(
+          "w-5 h-5",
+          period === 'Manhã' && "text-period-morning",
+          period === 'Tarde' && "text-period-afternoon",
+          period === 'Noite' && "text-period-night"
+        )} />
         <h3 className="font-semibold text-foreground">{config.label}</h3>
         <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
           {tasks.length}
