@@ -43,17 +43,17 @@ const periodVariants: Record<string, string> = {
 
 export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps) {
   const [filterProject, setFilterProject] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [titleValue, setTitleValue] = useState<string>('');
 
   const projectMap = new Map(projects.map(p => [p.id, p]));
 
-  const filteredTasks = tasks.filter(task => {
-    if (task.isArchived) return false;
+  // Backlog view only shows tasks with BACKLOG status
+  const backlogTasks = tasks.filter(task => task.status === 'BACKLOG' && !task.isArchived);
+
+  const filteredTasks = backlogTasks.filter(task => {
     if (filterProject !== 'all' && task.projectId !== filterProject) return false;
-    if (filterStatus !== 'all' && task.status !== filterStatus) return false;
     if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
     return true;
   });
@@ -91,17 +91,6 @@ export function BacklogView({ tasks, projects, onUpdateTask }: BacklogViewProps)
           </SelectContent>
         </Select>
         
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px] h-8 text-xs bg-secondary border-border">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-              <SelectItem key={key} value={key}>{config.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         
         <Select value={filterPriority} onValueChange={setFilterPriority}>
           <SelectTrigger className="w-[140px] h-8 text-xs bg-secondary border-border">
