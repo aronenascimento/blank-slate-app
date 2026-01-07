@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Task, Project, Status, STATUS_CONFIG, Priority } from '@/types';
 import { KanbanColumn } from './KanbanColumn';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { LayoutGrid } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { LayoutGrid, CheckCircle2 } from 'lucide-react';
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -11,7 +14,11 @@ interface KanbanViewProps {
 }
 
 export function KanbanView({ tasks, projects, onTaskStatusChange, onTaskPriorityChange }: KanbanViewProps) {
-  const statusOrder: Status[] = ['BACKLOG', 'A FAZER', 'FAZENDO', 'EM APROVAÇÃO', 'TRAVADO', 'FEITO'];
+  const [showCompleted, setShowCompleted] = useState(true);
+  
+  const statusOrder: Status[] = showCompleted 
+    ? ['BACKLOG', 'A FAZER', 'FAZENDO', 'EM APROVAÇÃO', 'TRAVADO', 'FEITO']
+    : ['BACKLOG', 'A FAZER', 'FAZENDO', 'EM APROVAÇÃO', 'TRAVADO'];
 
   const getTasksByStatus = (status: Status) => {
     return tasks.filter(task => task.status === status && !task.isArchived);
@@ -19,9 +26,23 @@ export function KanbanView({ tasks, projects, onTaskStatusChange, onTaskPriority
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-2">
-        <LayoutGrid className="w-6 h-6 text-primary" />
-        <h1 className="text-2xl font-bold">Kanban Geral</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <LayoutGrid className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-bold">Kanban Geral</h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Switch
+            id="show-completed"
+            checked={showCompleted}
+            onCheckedChange={setShowCompleted}
+          />
+          <Label htmlFor="show-completed" className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer">
+            <CheckCircle2 className="w-4 h-4" />
+            Mostrar concluídas
+          </Label>
+        </div>
       </div>
       
       <ScrollArea className="w-full whitespace-nowrap rounded-lg">
