@@ -16,8 +16,8 @@ const mapTaskFromSupabase = (data: any): Task => ({
 });
 
 // Mapeamento de camelCase para snake_case para o Supabase
-const mapTaskToSupabase = (task: Partial<Task>): Partial<Record<keyof Task, any>> => {
-  const updates: Partial<Record<keyof Task, any>> = {};
+const mapTaskToSupabase = (task: Partial<Task>): Record<string, any> => {
+  const updates: Record<string, any> = {};
   if (task.title !== undefined) updates.title = task.title;
   if (task.description !== undefined) updates.description = task.description;
   if (task.projectId !== undefined) updates.project_id = task.projectId;
