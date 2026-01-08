@@ -1,4 +1,4 @@
-import { LayoutGrid, FolderKanban, Calendar, Settings, Kanban } from 'lucide-react';
+import { LayoutGrid, FolderKanban, Calendar, Kanban } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { cn } from '@/lib/utils';
 
@@ -43,17 +43,7 @@ export function Sidebar({ overdueCount }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Footer/Settings */}
-      <div className="mt-auto border-t border-sidebar-border pt-4">
-        <NavLink
-          to="/settings"
-          className="flex items-center p-3 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-          activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-        >
-          <Settings className="w-5 h-5 mr-3" />
-          Configurações
-        </NavLink>
-      </div>
+      {/* O link de Configurações foi removido */}
     </div>
   );
 }
