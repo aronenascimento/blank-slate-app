@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Task, Project, Status, Priority, Period, STATUS_CONFIG, PRIORITY_CONFIG, PERIOD_CONFIG } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -68,6 +68,7 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
   // State for the inline creation row
   const [newTask, setNewTask] = useState<NewTaskState>(getInitialNewTaskState(projects));
   const [isCreating, setIsCreating] = useState(false); // Tracks if the user has interacted with the new row
+  const newTaskInputRef = useRef<HTMLInputElement>(null); // Ref para focar o input
 
   const projectMap = new Map(projects.map(p => [p.id, p]));
 
@@ -93,14 +94,24 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
   
   // --- New Task Logic ---
   
+  // Focus the new task input whenever the component renders and we are in creation mode
+  useEffect(() => {
+    if (isCreating && newTaskInputRef.current) {
+      newTaskInputRef.current.focus();
+    }
+  }, [isCreating]);
+  
   const handleNewTaskChange = (key: keyof NewTaskState, value: any) => {
     setNewTask(prev => ({ ...prev, [key]: value }));
+    // Only set isCreating to true if the user interacts with a field other than title
+    // Interaction with title is handled by the input itself
     if (key !== 'title') {
       setIsCreating(true);
     }
   };
   
   const handleNewTaskSubmit = () => {
+    // Only submit if there is a title and a project selected
     if (newTask.title.trim() && newTask.projectId) {
       onAddTask({
         title: newTask.title.trim(),
@@ -142,15 +153,18 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
         {/* Título - Input */}
         <td className="py-3 px-4">
           <Input
+            ref={newTaskInputRef}
             placeholder="Nova tarefa..."
             value={newTask.title}
             onChange={(e) => {
-              handleNewTaskChange('title', e.target.value);
+              // Update state without losing focus
+              setNewTask(prev => ({ ...prev, title: e.target.value }));
               setIsCreating(true);
             }}
             onBlur={handleNewTaskSubmit}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent default form submission if applicable
                 handleNewTaskSubmit();
               }
             }}
