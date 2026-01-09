@@ -247,8 +247,13 @@ export const useSupabaseData = () => {
       if (error) throw new Error(error.message);
       return projectId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: (deletedProjectId) => {
+      // Manually remove the project from the cache for instant UI update
+      queryClient.setQueryData(['projects', userId], (oldData: Project[] | undefined) => {
+        return oldData ? oldData.filter(p => p.id !== deletedProjectId) : [];
+      });
+      
+      // Invalidate tasks to ensure associated tasks are removed/updated in other views
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Projeto e tarefas associadas deletados.');
     },
@@ -350,7 +355,13 @@ export const useSupabaseData = () => {
       if (error) throw new Error(error.message);
       return taskId;
     },
-    onSuccess: () => {
+    onSuccess: (deletedTaskId) => {
+      // Manually remove the task from the local cache for instant UI update
+      queryClient.setQueryData(['tasks', userId], (oldData: Task[] | undefined) => {
+        return oldData ? oldData.filter(t => t.id !== deletedTaskId) : [];
+      });
+      
+      // Invalidate to ensure consistency, although manual update should be enough for UI
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Tarefa deletada.');
     },
