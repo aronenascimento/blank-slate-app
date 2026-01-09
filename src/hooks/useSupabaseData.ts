@@ -256,6 +256,7 @@ export const useSupabaseData = () => {
       projectId: string;
       period: Period;
       priority: Priority;
+      deadline: Date; // Aceita a data
     }) => {
       if (!userId) throw new Error('User not authenticated');
       
@@ -265,7 +266,7 @@ export const useSupabaseData = () => {
           user_id: userId,
           project_id: newTask.projectId,
           title: newTask.title,
-          deadline: new Date().toISOString().split('T')[0], // Default deadline to today
+          deadline: newTask.deadline.toISOString().split('T')[0], // Usa a data fornecida
           period: newTask.period,
           priority: newTask.priority,
           status: 'A FAZER',

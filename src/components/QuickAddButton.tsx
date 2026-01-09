@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { Plus, X, Flame, Skull, Zap, Circle, Sun, CloudSun, Moon } from 'lucide-react';
+import { Plus, X, Flame, Skull, Zap, Circle, Sun, CloudSun, Moon, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { Project, Period, Priority } from '@/types';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import React from 'react';
 
 interface QuickAddButtonProps {
   projects: Project[];
@@ -13,6 +18,7 @@ interface QuickAddButtonProps {
     projectId: string;
     period: Period;
     priority: Priority;
+    deadline: Date; // Adicionado deadline
   }) => void;
 }
 
@@ -35,18 +41,21 @@ export function QuickAddButton({ projects, onAddTask }: QuickAddButtonProps) {
   const [projectId, setProjectId] = useState(projects[0]?.id || '');
   const [period, setPeriod] = useState<Period>('Manhã');
   const [priority, setPriority] = useState<Priority>('Padrão');
+  const [deadline, setDeadline] = useState<Date>(new Date()); // Novo estado para a data
 
   const handleSubmit = () => {
-    if (!title.trim() || !projectId) return;
+    if (!title.trim() || !projectId || !deadline) return;
     
     onAddTask?.({
       title: title.trim(),
       projectId,
       period,
       priority,
+      deadline, // Passando a data
     });
     
     setTitle('');
+    setDeadline(new Date()); // Resetar para hoje
     setIsOpen(false);
   };
 
@@ -95,6 +104,35 @@ export function QuickAddButton({ projects, onAddTask }: QuickAddButtonProps) {
             </SelectContent>
           </Select>
           
+          {/* Deadline Picker */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal bg-secondary border-border",
+                  !deadline && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {deadline ? (
+                  format(deadline, "PPP", { locale: ptBR })
+                ) : (
+                  <span>Selecione o prazo</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={deadline}
+                onSelect={setDeadline}
+                initialFocus
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+          
           <div className="flex gap-2">
             <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
               <SelectTrigger className="bg-secondary border-border flex-1">
@@ -127,7 +165,7 @@ export function QuickAddButton({ projects, onAddTask }: QuickAddButtonProps) {
             </Select>
           </div>
           
-          <Button onClick={handleSubmit} className="w-full" disabled={!title.trim()}>
+          <Button onClick={handleSubmit} className="w-full" disabled={!title.trim() || !deadline}>
             Adicionar Tarefa
           </Button>
         </div>
