@@ -20,6 +20,7 @@ interface AppDataContext {
   handleUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   handleToggleProjectStatus: (projectId: string) => void;
   handleDeleteProject: (projectId: string) => void;
+  handleAddTask: (task: { title: string; projectId: string; period: Period; priority: Priority; deadline: Date; }) => void;
 }
 
 const MainLayout = () => {
@@ -84,7 +85,8 @@ const MainLayout = () => {
             handleAddProject,
             handleUpdateProject,
             handleToggleProjectStatus,
-            handleDeleteProject
+            handleDeleteProject,
+            handleAddTask
           } as AppDataContext} />
         </main>
       </div>
