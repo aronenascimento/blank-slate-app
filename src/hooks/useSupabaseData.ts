@@ -21,7 +21,7 @@ interface SupabaseTask {
   project_id: string;
   title: string;
   description: string | null;
-  deadline: string; // ISO date string
+  deadline: string; // ISO date string (YYYY-MM-DD)
   period: Period;
   priority: Priority;
   status: Status;
@@ -45,6 +45,14 @@ export interface Profile {
   updatedAt: Date;
 }
 
+// Helper function to correctly parse YYYY-MM-DD date strings as local dates
+// This prevents timezone offsets from shifting the date back a day.
+const parseSupabaseDate = (dateString: string): Date => {
+  // We append 'T00:00:00' to force interpretation as the start of the day in local time.
+  // This is a common workaround for date-only inputs.
+  return new Date(`${dateString}T00:00:00`);
+};
+
 // --- Data Transformation ---
 const transformProject = (p: SupabaseProject): Project => ({
   id: p.id,
@@ -59,7 +67,7 @@ const transformTask = (t: SupabaseTask): Task => ({
   title: t.title,
   description: t.description ?? undefined,
   projectId: t.project_id,
-  deadline: new Date(t.deadline),
+  deadline: parseSupabaseDate(t.deadline), // Use the helper function here
   period: t.period,
   priority: t.priority,
   status: t.status,
@@ -266,7 +274,7 @@ export const useSupabaseData = () => {
           user_id: userId,
           project_id: newTask.projectId,
           title: newTask.title,
-          deadline: newTask.deadline.toISOString().split('T')[0], // Usa a data fornecida
+          deadline: newTask.deadline.toISOString().split('T')[0], // Salva apenas a data (YYYY-MM-DD)
           period: newTask.period,
           priority: newTask.priority,
           status: 'A FAZER',
