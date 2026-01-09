@@ -3,115 +3,33 @@ import { Outlet, useOutletContext } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { QuickAddButton } from '@/components/QuickAddButton';
+import { mockProjects, mockTasks } from '@/data/mockData';
 import { Task, Status, Period, Priority, Project, ProjectColor } from '@/types';
 import { toast } from 'sonner';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchTasks, createTask, updateTask, deleteTask } from '@/services/taskService';
-import { fetchProjects, createProject, updateProject } from '@/services/projectService';
 
 const MainLayout = () => {
-  const queryClient = useQueryClient();
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
   
   // Define sidebar width for content padding
   const SIDEBAR_WIDTH = '240px';
 
-  // --- Data Fetching (Queries) ---
-  const { data: tasks = [], isLoading: isLoadingTasks, error: tasksError } = useQuery<Task[]>({
-    queryKey: ['tasks'],
-    queryFn: fetchTasks,
-  });
-
-  const { data: projects = [], isLoading: isLoadingProjects, error: projectsError } = useQuery<Project[]>({
-    queryKey: ['projects'],
-    queryFn: fetchProjects,
-  });
-  
-  // Handle loading/error states (simple display for now)
-  if (isLoadingTasks || isLoadingProjects) {
-    // In a real app, you'd show a proper skeleton/loading screen
-    return <div className="min-h-screen flex items-center justify-center text-primary">Carregando dados...</div>;
-  }
-  
-  if (tasksError || projectsError) {
-    toast.error("Erro ao carregar dados: " + (tasksError?.message || projectsError?.message));
-    return <div className="min-h-screen flex items-center justify-center text-destructive">Erro ao carregar dados.</div>;
-  }
-
-  // --- Mutations ---
-
-  // Task Mutations
-  const addTaskMutation = useMutation({
-    mutationFn: createTask,
-    onSuccess: (newTask) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success(`Tarefa "${newTask.title}" adicionada!`);
-    },
-    onError: (error) => {
-      toast.error(`Erro ao adicionar tarefa: ${error.message}`);
-    }
-  });
-  
-  const updateTaskMutation = useMutation({
-    mutationFn: ({ taskId, updates }: { taskId: string, updates: Partial<Task> }) => updateTask(taskId, updates),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      // Optimistic update feedback is better, but for simplicity, we use toast on success
-      const taskTitle = tasks.find(t => t.id === variables.taskId)?.title || 'Tarefa';
-      toast.success(`${taskTitle} atualizada.`);
-    },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar tarefa: ${error.message}`);
-    }
-  });
-  
-  const deleteTaskMutation = useMutation({
-    mutationFn: deleteTask,
-    onSuccess: (_, taskId) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      const taskTitle = tasks.find(t => t.id === taskId)?.title || 'Tarefa';
-      toast.success(`Tarefa "${taskTitle}" deletada.`);
-    },
-    onError: (error) => {
-      toast.error(`Erro ao deletar tarefa: ${error.message}`);
-    }
-  });
-
-  // Project Mutations
-  const addProjectMutation = useMutation({
-    mutationFn: createProject,
-    onSuccess: (newProject) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success(`Projeto "${newProject.name}" criado com sucesso!`);
-    },
-    onError: (error) => {
-      toast.error(`Erro ao criar projeto: ${error.message}`);
-    }
-  });
-  
-  const updateProjectMutation = useMutation({
-    mutationFn: ({ projectId, updates }: { projectId: string, updates: Partial<Project> }) => updateProject(projectId, updates),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      const projectName = projects.find(p => p.id === variables.projectId)?.name || 'Projeto';
-      toast.success(`Projeto "${projectName}" atualizado.`);
-    },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar projeto: ${error.message}`);
-    }
-  });
-
-  // --- Handlers ---
-
   const handleTaskStatusChange = (taskId: string, status: Status) => {
-    updateTaskMutation.mutate({ taskId, updates: { status } });
+    setTasks(prev => prev.map(task => 
+      task.id === taskId ? { ...task, status } : task
+    ));
   };
   
   const handleTaskPeriodChange = (taskId: string, newPeriod: Period) => {
-    updateTaskMutation.mutate({ taskId, updates: { period: newPeriod } });
+    setTasks(prev => prev.map(task => 
+      task.id === taskId ? { ...task, period: newPeriod } : task
+    ));
   };
   
   const handleTaskPriorityChange = (taskId: string, newPriority: Priority) => {
-    updateTaskMutation.mutate({ taskId, updates: { priority: newPriority } });
+    setTasks(prev => prev.map(task => 
+      task.id === taskId ? { ...task, priority: newPriority } : task
+    ));
   };
 
   const handleAddTask = (newTask: {
@@ -120,50 +38,70 @@ const MainLayout = () => {
     period: Period;
     priority: Priority;
   }) => {
-    // The service layer handles setting default status, deadline (today), and isArchived (false)
-    const taskData = {
-      ...newTask,
-      deadline: new Date(), // Set deadline to today
-      status: 'A FAZER' as Status,
+    const task: Task = {
+      id: Date.now().toString(),
+      title: newTask.title,
+      projectId: newTask.projectId,
+      deadline: new Date(),
+      period: newTask.period,
+      priority: newTask.priority,
+      status: 'A FAZER',
       isArchived: false,
       createdAt: new Date(),
     };
-    // We only pass the required fields to the service layer
-    const serviceData = {
-      title: taskData.title,
-      projectId: taskData.projectId,
-      deadline: taskData.deadline,
-      period: taskData.period,
-      priority: taskData.priority,
-      status: taskData.status,
-      description: '', // Ensure description is included if needed by the service, or omit if optional
-    };
-    
-    addTaskMutation.mutate(serviceData);
+    setTasks(prev => [task, ...prev]);
+    toast.success(`Tarefa "${task.title}" adicionada!`);
   };
   
   const handleUpdateTask = (taskId: string, updates: Partial<Task>) => {
-    updateTaskMutation.mutate({ taskId, updates });
+    setTasks(prev => prev.map(task => {
+      if (task.id === taskId) {
+        toast.success(`Tarefa "${task.title}" atualizada.`);
+        return { ...task, ...updates };
+      }
+      return task;
+    }));
   };
   
   const handleDeleteTask = (taskId: string) => {
-    deleteTaskMutation.mutate(taskId);
+    const taskToDelete = tasks.find(t => t.id === taskId);
+    if (taskToDelete) {
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      toast.success(`Tarefa "${taskToDelete.title}" deletada.`);
+    }
   };
   
   const handleAddProject = (newProject: { name: string; color: ProjectColor }) => {
-    addProjectMutation.mutate(newProject);
+    const project: Project = {
+      id: Date.now().toString(),
+      name: newProject.name,
+      status: 'Ativo',
+      color: newProject.color,
+      createdAt: new Date(),
+    };
+    setProjects(prev => [project, ...prev]);
+    toast.success(`Projeto "${project.name}" criado com sucesso!`);
   };
   
   const handleUpdateProject = (projectId: string, updates: Partial<Project>) => {
-    updateProjectMutation.mutate({ projectId, updates });
+    setProjects(prev => prev.map(project => {
+      if (project.id === projectId) {
+        toast.success(`Projeto "${project.name}" atualizado.`);
+        return { ...project, ...updates };
+      }
+      return project;
+    }));
   };
   
   const handleToggleProjectStatus = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    if (project) {
-      const newStatus = project.status === 'Ativo' ? 'Pausado' : 'Ativo';
-      updateProjectMutation.mutate({ projectId, updates: { status: newStatus } });
-    }
+    setProjects(prev => prev.map(project => {
+      if (project.id === projectId) {
+        const newStatus = project.status === 'Ativo' ? 'Pausado' : 'Ativo';
+        toast.info(`Projeto "${project.name}" foi ${newStatus === 'Ativo' ? 'ativado' : 'pausado'}.`);
+        return { ...project, status: newStatus };
+      }
+      return project;
+    }));
   };
 
   const overdueTasks = tasks.filter(task => {
