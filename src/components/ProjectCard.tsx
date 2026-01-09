@@ -13,7 +13,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, tasks, onClick }: ProjectCardProps) {
-  const { handleUpdateProject, handleToggleProjectStatus } = useAppData();
+  const { handleUpdateProject, handleToggleProjectStatus, handleDeleteProject } = useAppData();
   
   const projectTasks = tasks.filter(t => t.projectId === project.id && !t.isArchived);
   const completedTasks = projectTasks.filter(t => t.status === 'FEITO').length;
@@ -90,6 +90,7 @@ export function ProjectCard({ project, tasks, onClick }: ProjectCardProps) {
       project={project} 
       onUpdateProject={handleUpdateProject}
       onToggleStatus={handleToggleProjectStatus}
+      onDeleteProject={handleDeleteProject} // Adicionado
     >
       {cardContent}
     </ProjectDetailDialog>

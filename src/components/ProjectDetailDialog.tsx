@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Palette, Save, X, Pause, Play } from 'lucide-react';
+import { Palette, Save, X, Pause, Play, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Regex para validar código hexadecimal de cor (ex: #RRGGBB)
@@ -32,10 +32,11 @@ interface ProjectDetailDialogProps {
   project: Project;
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   onToggleStatus: (projectId: string) => void;
+  onDeleteProject: (projectId: string) => void; // Adicionado
   children: React.ReactNode;
 }
 
-export function ProjectDetailDialog({ project, onUpdateProject, onToggleStatus, children }: ProjectDetailDialogProps) {
+export function ProjectDetailDialog({ project, onUpdateProject, onToggleStatus, onDeleteProject, children }: ProjectDetailDialogProps) {
   const [open, setOpen] = useState(false);
   
   const form = useForm<ProjectFormValues>({
@@ -66,6 +67,13 @@ export function ProjectDetailDialog({ project, onUpdateProject, onToggleStatus, 
     onToggleStatus(project.id);
     // Close dialog if status changes
     setOpen(false);
+  };
+  
+  const handleDelete = () => {
+    if (window.confirm(`Tem certeza que deseja deletar o projeto "${project.name}"? Todas as tarefas associadas serão perdidas.`)) {
+      onDeleteProject(project.id);
+      setOpen(false);
+    }
   };
 
   const isActive = project.status === 'Ativo';
@@ -154,7 +162,11 @@ export function ProjectDetailDialog({ project, onUpdateProject, onToggleStatus, 
               </Button>
             </div>
 
-            <DialogFooter className="pt-4">
+            <DialogFooter className="flex justify-between pt-4">
+              <Button type="button" variant="destructive" onClick={handleDelete}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Deletar Projeto
+              </Button>
               <Button type="submit" disabled={!form.formState.isValid}>
                 <Save className="w-4 h-4 mr-2" />
                 Salvar Alterações

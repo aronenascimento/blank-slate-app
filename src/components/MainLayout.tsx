@@ -103,6 +103,19 @@ const MainLayout = () => {
       return project;
     }));
   };
+  
+  const handleDeleteProject = (projectId: string) => {
+    const projectToDelete = projects.find(p => p.id === projectId);
+    if (projectToDelete) {
+      // 1. Remove tasks associated with the project
+      setTasks(prevTasks => prevTasks.filter(task => task.projectId !== projectId));
+      
+      // 2. Remove the project
+      setProjects(prevProjects => prevProjects.filter(project => project.id !== projectId));
+      
+      toast.success(`Projeto "${projectToDelete.name}" e suas tarefas foram deletados.`);
+    }
+  };
 
   const overdueTasks = tasks.filter(task => {
     const today = new Date();
@@ -133,7 +146,8 @@ const MainLayout = () => {
             handleDeleteTask,
             handleAddProject,
             handleUpdateProject,
-            handleToggleProjectStatus
+            handleToggleProjectStatus,
+            handleDeleteProject // Adicionado
           }} />
         </main>
       </div>
@@ -161,5 +175,6 @@ export const useAppData = () => {
     handleAddProject: (newProject: { name: string; color: ProjectColor }) => void;
     handleUpdateProject: (projectId: string, updates: Partial<Project>) => void;
     handleToggleProjectStatus: (projectId: string) => void;
+    handleDeleteProject: (projectId: string) => void; // Adicionado
   }>();
 };
