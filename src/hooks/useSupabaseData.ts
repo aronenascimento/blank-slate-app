@@ -249,7 +249,7 @@ export const useSupabaseData = () => {
     }
   });
 
-  // Task Mutations (omitted for brevity, kept the same as before)
+  // Task Mutations
   const addTaskMutation = useMutation({
     mutationFn: async (newTask: {
       title: string;
@@ -374,7 +374,9 @@ export const useSupabaseData = () => {
 
     // Task Handlers
     handleAddTask: addTaskMutation.mutate,
-    handleUpdateTask: updateTaskMutation.mutate,
+    handleUpdateTask: (taskId: string, updates: Partial<Task>) => {
+      updateTaskMutation.mutate({ taskId, updates });
+    },
     handleDeleteTask: deleteTaskMutation.mutate,
     
     // Specific Task Updates (used by drag/drop and quick actions)
