@@ -5,6 +5,7 @@ import { QuickAddButton } from '@/components/QuickAddButton';
 import { Task, Status, Period, Priority, Project, ProjectColor } from '@/types';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { useSession } from './SessionContextProvider';
+import { MobileSidebar } from './MobileSidebar'; // Import MobileSidebar
 
 // Define the context type for components consuming app data
 interface AppDataContext {
@@ -64,12 +65,19 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar overdueCount={overdueTasks.length} />
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block">
+        <Sidebar overdueCount={overdueTasks.length} />
+      </div>
       
-      <div style={{ marginLeft: SIDEBAR_WIDTH }} className="flex-1">
+      {/* Main Content Area */}
+      <div className="flex-1 lg:ml-[240px]">
         <Header 
           overdueCount={overdueTasks.length}
-        />
+        >
+          {/* Mobile Menu Trigger passed as a child/prop to Header */}
+          <MobileSidebar overdueCount={overdueTasks.length} />
+        </Header>
         
         <main className="px-4 py-6">
           {/* Outlet renders the specific route component (DashboardPage, ProjectsPage, etc.) */}

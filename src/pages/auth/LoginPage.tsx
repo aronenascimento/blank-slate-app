@@ -19,7 +19,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md p-8 space-y-6 rounded-xl border border-border bg-card shadow-lg">
-        <h1 className="text-2xl font-bold text-center text-foreground">TaskFlow</h1>
+        <h1 className="text-2xl font-bold text-center text-foreground">P-flow</h1>
         <Auth
           supabaseClient={supabase}
           providers={[]}

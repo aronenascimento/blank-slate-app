@@ -35,7 +35,7 @@ export function Sidebar({ overdueCount }: SidebarProps) {
       {/* Logo/Title Area */}
       <div className="mb-8 pt-2">
         <h2 className="text-xl font-bold text-sidebar-foreground">
-          Task<span className="text-gradient">Flow</span>
+          P-<span className="text-gradient">flow</span>
         </h2>
       </div>
 
