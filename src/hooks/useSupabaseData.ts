@@ -1,4 +1,3 @@
-void.">
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Task, Project, Status, Period, Priority, ProjectColor } from '@/types';
@@ -240,7 +239,7 @@ export const useSupabaseData = () => {
       if (error) throw new Error(error.message);
       return projectId;
     },
-    onSuccess: (projectId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Projeto e tarefas associadas deletados.');
