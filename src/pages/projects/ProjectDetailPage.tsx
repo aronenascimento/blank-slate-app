@@ -4,8 +4,8 @@ import { ArrowLeft, ListTodo, Plus, Pause, Play, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/TaskCard';
 import { cn } from '@/lib/utils';
-import { PROJECT_COLORS } from '@/types';
-import { ProjectDetailDialog } from '@/components/ProjectDetailDialog'; // Importado
+import { getProjectAccentStyle } from '@/lib/colorUtils'; // Importado
+import { ProjectDetailDialog } from '@/components/ProjectDetailDialog';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -15,8 +15,8 @@ const ProjectDetailPage = () => {
     handleTaskStatusChange, 
     handleTaskPriorityChange, 
     handleToggleProjectStatus,
-    handleUpdateProject, // Necessário para o diálogo
-    handleDeleteProject, // Necessário para o diálogo
+    handleUpdateProject,
+    handleDeleteProject,
   } = useAppData();
   const navigate = useNavigate();
 
@@ -38,10 +38,8 @@ const ProjectDetailPage = () => {
     return <div className="text-center py-12 text-muted-foreground">Projeto não encontrado.</div>;
   }
   
-  // Determine color style: use hex code directly or predefined Tailwind class
-  const colorStyle = project.color.startsWith('#') 
-    ? { backgroundColor: project.color } 
-    : { className: PROJECT_COLORS[project.color] || 'bg-primary' };
+  // Use utility function for color style
+  const accentStyle = getProjectAccentStyle(project.color);
     
   const pendingTasks = projectTasks.filter(t => t.status !== 'FEITO').length;
   const isActive = project.status === 'Ativo';
@@ -55,8 +53,8 @@ const ProjectDetailPage = () => {
       
       <div className="flex items-center gap-4 border-b border-border pb-4">
         <div 
-          className={cn("w-2 h-8 rounded-full shrink-0", colorStyle.className)}
-          style={colorStyle.backgroundColor ? { backgroundColor: colorStyle.backgroundColor } : undefined}
+          className="w-2 h-8 rounded-full shrink-0"
+          style={accentStyle} // Usando o estilo do utilitário
         />
         <div>
           <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>

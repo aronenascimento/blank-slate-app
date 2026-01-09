@@ -46,18 +46,3 @@ export const PERIOD_CONFIG: Record<Period, { label: string; icon: string; gradie
   'Tarde': { label: 'Tarde', icon: 'CloudSun', gradient: 'period-afternoon' },
   'Noite': { label: 'Noite', icon: 'Moon', gradient: 'period-night' },
 };
-
-// PROJECT_COLORS is removed as we now use dynamic hex codes.
-// We will use CSS variables for the mock data colors in ProjectCard, 
-// but for new projects, we use the hex code directly.
-// We need to keep a mapping for the mock data colors if they rely on Tailwind classes/CSS variables.
-// Since the mock data uses 'blue', 'purple', etc., we must keep the PROJECT_COLORS map for existing data.
-
-export const PROJECT_COLORS: Record<string, string> = {
-  blue: 'bg-project-blue',
-  purple: 'bg-project-purple',
-  green: 'bg-project-green',
-  orange: 'bg-project-orange',
-  pink: 'bg-project-pink',
-  cyan: 'bg-project-cyan',
-};
