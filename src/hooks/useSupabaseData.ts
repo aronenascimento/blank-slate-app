@@ -29,6 +29,22 @@ interface SupabaseTask {
   created_at: string;
 }
 
+interface SupabaseProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  updated_at: string;
+}
+
+export interface Profile {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
+  updatedAt: Date;
+}
+
 // --- Data Transformation ---
 const transformProject = (p: SupabaseProject): Project => ({
   id: p.id,
@@ -49,6 +65,14 @@ const transformTask = (t: SupabaseTask): Task => ({
   status: t.status,
   isArchived: t.is_archived,
   createdAt: new Date(t.created_at),
+});
+
+const transformProfile = (p: SupabaseProfile): Profile => ({
+  id: p.id,
+  firstName: p.first_name,
+  lastName: p.last_name,
+  avatarUrl: p.avatar_url,
+  updatedAt: new Date(p.updated_at),
 });
 
 // --- Data Fetching ---
@@ -75,6 +99,20 @@ const fetchTasks = async (userId: string): Promise<Task[]> => {
   return data.map(transformTask);
 };
 
+const fetchProfile = async (userId: string): Promise<Profile | null> => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found (expected if profile hasn't been created yet)
+    throw new Error(error.message);
+  }
+  
+  return data ? transformProfile(data) : null;
+};
+
 // --- Main Hook ---
 
 export const useSupabaseData = () => {
@@ -82,7 +120,14 @@ export const useSupabaseData = () => {
   const { user } = useSession();
   const userId = user?.id;
 
-  // 1. Fetch Projects
+  // 1. Fetch Profile
+  const profileQuery = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: () => fetchProfile(userId!),
+    enabled: !!userId,
+  });
+
+  // 2. Fetch Projects
   const projectsQuery = useQuery({
     queryKey: ['projects', userId],
     queryFn: () => fetchProjects(userId!),
@@ -90,7 +135,7 @@ export const useSupabaseData = () => {
     initialData: [],
   });
 
-  // 2. Fetch Tasks
+  // 3. Fetch Tasks
   const tasksQuery = useQuery({
     queryKey: ['tasks', userId],
     queryFn: () => fetchTasks(userId!),
@@ -99,8 +144,39 @@ export const useSupabaseData = () => {
   });
 
   // --- Mutations ---
+  
+  // Profile Mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updates: { firstName: string; lastName: string; avatarUrl?: string }) => {
+      if (!userId) throw new Error('User not authenticated');
+      
+      const payload = {
+        first_name: updates.firstName,
+        last_name: updates.lastName,
+        avatar_url: updates.avatarUrl,
+        updated_at: new Date().toISOString(),
+      };
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(payload)
+        .eq('id', userId)
+        .select()
+        .single();
 
-  // Project Mutations
+      if (error) throw new Error(error.message);
+      return transformProfile(data);
+    },
+    onSuccess: (updatedProfile) => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      toast.success(`Perfil de ${updatedProfile.firstName} atualizado.`);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar perfil: ${error.message}`);
+    }
+  });
+
+  // Project Mutations (omitted for brevity, kept the same as before)
   const addProjectMutation = useMutation({
     mutationFn: async (newProject: { name: string; color: ProjectColor }) => {
       if (!userId) throw new Error('User not authenticated');
@@ -145,7 +221,7 @@ export const useSupabaseData = () => {
     },
     onSuccess: (updatedProject) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Tasks might need refresh if project status affects views
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success(`Projeto "${updatedProject.name}" atualizado.`);
     },
     onError: (error) => {
@@ -155,7 +231,6 @@ export const useSupabaseData = () => {
   
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
-      // Tasks are automatically deleted via CASCADE constraint in the database
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -174,7 +249,7 @@ export const useSupabaseData = () => {
     }
   });
 
-  // Task Mutations
+  // Task Mutations (omitted for brevity, kept the same as before)
   const addTaskMutation = useMutation({
     mutationFn: async (newTask: {
       title: string;
@@ -276,11 +351,15 @@ export const useSupabaseData = () => {
   });
 
   return {
+    profile: profileQuery.data,
     projects: projectsQuery.data || [],
     tasks: tasksQuery.data || [],
-    isLoading: projectsQuery.isLoading || tasksQuery.isLoading,
-    isError: projectsQuery.isError || tasksQuery.isError,
+    isLoading: profileQuery.isLoading || projectsQuery.isLoading || tasksQuery.isLoading,
+    isError: profileQuery.isError || projectsQuery.isError || tasksQuery.isError,
     
+    // Profile Handlers
+    handleUpdateProfile: updateProfileMutation.mutate,
+
     // Project Handlers
     handleAddProject: addProjectMutation.mutate,
     handleUpdateProject: updateProjectMutation.mutate,
