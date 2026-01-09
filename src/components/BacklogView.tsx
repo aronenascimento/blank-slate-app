@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Task, Project, Status, Priority, Period, STATUS_CONFIG, PRIORITY_CONFIG, PERIOD_CONFIG } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +12,7 @@ import * as Lucide from 'lucide-react';
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { NewTaskRow } from './NewTaskRow'; // Importando o novo componente
 
 interface BacklogViewProps {
   tasks: Task[];
@@ -19,23 +20,6 @@ interface BacklogViewProps {
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
   onAddTask: (task: { title: string; projectId: string; period: Period; priority: Priority; deadline: Date; }) => void;
 }
-
-interface NewTaskState {
-  title: string;
-  projectId: string;
-  deadline: Date;
-  period: Period;
-  priority: Priority;
-}
-
-const getInitialNewTaskState = (projects: Project[]): NewTaskState => ({
-  title: '',
-  // Tries to default to an active project, otherwise the first one, or empty string
-  projectId: projects.find(p => p.status === 'Ativo')?.id || projects[0]?.id || '',
-  deadline: new Date(),
-  period: 'Manhã' as Period,
-  priority: 'Padrão' as Priority,
-});
 
 const statusVariants: Record<string, 'backlog' | 'todo' | 'blocked' | 'doing' | 'review' | 'done'> = {
   'BACKLOG': 'backlog',
@@ -65,11 +49,6 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [titleValue, setTitleValue] = useState<string>('');
   
-  // State for the inline creation row
-  const [newTask, setNewTask] = useState<NewTaskState>(getInitialNewTaskState(projects));
-  const [isCreating, setIsCreating] = useState(false); // Tracks if the user has interacted with the new row
-  const newTaskInputRef = useRef<HTMLInputElement>(null); // Ref para focar o input
-
   const projectMap = new Map(projects.map(p => [p.id, p]));
 
   // Backlog view only shows tasks with BACKLOG status
@@ -92,213 +71,11 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
     return priorityOrder[a.priority] - priorityOrder[b.priority];
   });
   
-  // --- New Task Logic ---
-  
-  // Focus the new task input whenever the component renders and we are in creation mode
-  useEffect(() => {
-    if (isCreating && newTaskInputRef.current) {
-      newTaskInputRef.current.focus();
-    }
-  }, [isCreating]);
-  
-  const handleNewTaskChange = (key: keyof NewTaskState, value: any) => {
-    setNewTask(prev => ({ ...prev, [key]: value }));
-    // Only set isCreating to true if the user interacts with a field other than title
-    // Interaction with title is handled by the input itself
-    if (key !== 'title') {
-      setIsCreating(true);
-    }
+  // Função para focar o input de edição de título
+  const handleTitleEditClick = (taskId: string, currentTitle: string) => {
+    setEditingTitle(taskId);
+    setTitleValue(currentTitle);
   };
-  
-  const handleNewTaskSubmit = () => {
-    // Only submit if there is a title and a project selected
-    if (newTask.title.trim() && newTask.projectId) {
-      onAddTask({
-        title: newTask.title.trim(),
-        projectId: newTask.projectId,
-        period: newTask.period,
-        priority: newTask.priority,
-        deadline: newTask.deadline,
-      });
-      
-      // Reset state and prepare for the next task
-      setNewTask(getInitialNewTaskState(projects));
-      setIsCreating(false);
-    } else if (isCreating) {
-      // If user interacted but didn't provide title, just reset the state
-      setIsCreating(false);
-      setNewTask(getInitialNewTaskState(projects));
-    }
-  };
-  
-  const NewTaskRow = () => {
-    const currentProject = projectMap.get(newTask.projectId);
-    const periodConfig = PERIOD_CONFIG[newTask.period];
-    const PeriodIcon = Lucide[periodConfig.icon as keyof typeof Lucide] as React.ElementType;
-    const priorityConfig = PRIORITY_CONFIG[newTask.priority];
-    const PriorityIcon = Lucide[priorityConfig.icon as keyof typeof Lucide] as React.ElementType;
-    
-    if (projects.length === 0) {
-        return (
-            <tr className="border-b border-border/50">
-                <td colSpan={6} className="py-3 px-4 text-center text-muted-foreground text-sm">
-                    Crie um projeto primeiro para adicionar tarefas.
-                </td>
-            </tr>
-        );
-    }
-
-    return (
-      <tr className="bg-card/50 hover:bg-card-hover transition-colors border-b border-border/50">
-        {/* Título - Input */}
-        <td className="py-3 px-4">
-          <Input
-            ref={newTaskInputRef}
-            placeholder="Nova tarefa..."
-            value={newTask.title}
-            onChange={(e) => {
-              // Update state without losing focus
-              setNewTask(prev => ({ ...prev, title: e.target.value }));
-              setIsCreating(true);
-            }}
-            onBlur={handleNewTaskSubmit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent default form submission if applicable
-                handleNewTaskSubmit();
-              }
-            }}
-            className="h-7 text-sm bg-background border-border"
-          />
-        </td>
-        
-        {/* Projeto - select inline */}
-        <td className="py-3 px-4">
-          <Select 
-            value={newTask.projectId} 
-            onValueChange={(value) => handleNewTaskChange('projectId', value)}
-          >
-            <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
-              {currentProject && (
-                <Badge 
-                  className="text-[10px] cursor-pointer border" 
-                  style={getProjectBadgeStyles(currentProject.color)}
-                >
-                  {currentProject.name}
-                </Badge>
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {projects.map(p => (
-                <SelectItem key={p.id} value={p.id}>
-                  <Badge 
-                    className="text-[10px] border" 
-                    style={getProjectBadgeStyles(p.color)}
-                  >
-                    {p.name}
-                  </Badge>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </td>
-        
-        {/* Prazo - calendário */}
-        <td className="py-3 px-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className={cn(
-                "text-sm flex items-center gap-1 hover:text-primary transition-colors cursor-pointer text-muted-foreground"
-              )} onClick={() => setIsCreating(true)}>
-                <CalendarIcon className="w-3 h-3" />
-                {format(newTask.deadline, "dd/MM", { locale: ptBR })}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={newTask.deadline}
-                onSelect={(date) => {
-                  if (date) {
-                    handleNewTaskChange('deadline', date);
-                  }
-                }}
-                className="pointer-events-auto"
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
-        </td>
-        
-        {/* Período - select inline */}
-        <td className="py-3 px-4">
-          <Select 
-            value={newTask.period} 
-            onValueChange={(value) => handleNewTaskChange('period', value as Period)}
-          >
-            <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
-              <span className={cn(
-                "text-[10px] font-medium flex items-center gap-1 cursor-pointer px-2 py-0.5 rounded-md",
-                periodVariants[newTask.period]
-              )}>
-                <PeriodIcon className="w-3 h-3" />
-                {newTask.period}
-              </span>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PERIOD_CONFIG).map(([key, config]) => {
-                const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
-                return (
-                  <SelectItem key={key} value={key}>
-                    <span className={cn(
-                      "flex items-center gap-2 px-2 py-0.5 rounded-md",
-                      periodVariants[key as Period]
-                    )}>
-                      <Icon className="w-4 h-4" /> {config.label}
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </td>
-        
-        {/* Prioridade - select inline */}
-        <td className="py-3 px-4">
-          <Select 
-            value={newTask.priority} 
-            onValueChange={(value) => handleNewTaskChange('priority', value as Priority)}
-          >
-            <SelectTrigger className="w-auto h-7 text-xs border-0 bg-transparent p-0 hover:bg-secondary/50 rounded">
-              <Badge variant={priorityVariants[newTask.priority]} className="text-[10px] flex items-center gap-1 cursor-pointer">
-                <PriorityIcon className="w-3 h-3" /> {priorityConfig.label}
-              </Badge>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PRIORITY_CONFIG).map(([key, config]) => {
-                const Icon = Lucide[config.icon as keyof typeof Lucide] as React.ElementType;
-                return (
-                  <SelectItem key={key} value={key}>
-                    <span className="flex items-center gap-2">
-                      <Icon className="w-4 h-4" /> {config.label}
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </td>
-        
-        {/* Status (Fixed) */}
-        <td className="py-3 px-4">
-          <Badge variant={statusVariants['BACKLOG']} className="text-[10px]">
-            {STATUS_CONFIG['BACKLOG'].label}
-          </Badge>
-        </td>
-      </tr>
-    );
-  };
-
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -410,10 +187,7 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
                             "font-medium text-sm cursor-pointer hover:text-primary transition-colors",
                             task.status === 'FEITO' && "line-through text-muted-foreground"
                           )}
-                          onClick={() => {
-                            setEditingTitle(task.id);
-                            setTitleValue(task.title);
-                          }}
+                          onClick={() => handleTitleEditClick(task.id, task.title)}
                         >
                           {task.title}
                         </span>
@@ -563,12 +337,12 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
               })}
               
               {/* New Task Row */}
-              <NewTaskRow />
+              <NewTaskRow projects={projects} onAddTask={onAddTask} />
             </tbody>
           </table>
         </div>
         
-        {sortedTasks.length === 0 && !isCreating && projects.length > 0 && (
+        {sortedTasks.length === 0 && projects.length > 0 && (
           <div className="py-12 text-center text-muted-foreground">
             Nenhuma tarefa encontrada com os filtros selecionados
           </div>
