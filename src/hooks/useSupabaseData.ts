@@ -22,9 +22,9 @@ interface SupabaseTask {
   title: string;
   description: string | null;
   deadline: string; // ISO date string (YYYY-MM-DD)
-  period: Period;
-  priority: Priority;
-  status: Status;
+  period: Period; // Now enforced by DB ENUM
+  priority: Priority; // Now enforced by DB ENUM
+  status: Status; // Now enforced by DB ENUM
   is_archived: boolean;
   created_at: string;
 }
@@ -184,10 +184,12 @@ export const useSupabaseData = () => {
     }
   });
 
-  // Project Mutations (omitted for brevity, kept the same as before)
+  // Project Mutations
   const addProjectMutation = useMutation({
     mutationFn: async (newProject: { name: string; color: ProjectColor }) => {
       if (!userId) throw new Error('User not authenticated');
+      
+      // RLS and the new CHECK constraint on 'color' will enforce security here.
       const { data, error } = await supabase
         .from('projects')
         .insert({ 
@@ -213,6 +215,7 @@ export const useSupabaseData = () => {
 
   const updateProjectMutation = useMutation({
     mutationFn: async ({ projectId, updates }: { projectId: string; updates: Partial<Project> }) => {
+      // RLS and the new CHECK constraint on 'color' will enforce security here.
       const { data, error } = await supabase
         .from('projects')
         .update({
@@ -273,6 +276,7 @@ export const useSupabaseData = () => {
     }) => {
       if (!userId) throw new Error('User not authenticated');
       
+      // The database ENUMs now enforce that period, priority, and status are valid strings.
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -282,7 +286,7 @@ export const useSupabaseData = () => {
           deadline: newTask.deadline.toISOString().split('T')[0], // Salva apenas a data (YYYY-MM-DD)
           period: newTask.period,
           priority: newTask.priority,
-          status: 'BACKLOG', // Alterado de 'A FAZER' para 'BACKLOG'
+          status: 'BACKLOG', // DB default is now BACKLOG
           is_archived: false,
         })
         .select()
@@ -309,6 +313,7 @@ export const useSupabaseData = () => {
       if (updates.title !== undefined) payload.title = updates.title;
       if (updates.description !== undefined) payload.description = updates.description;
       if (updates.projectId !== undefined) payload.project_id = updates.projectId;
+      // DB ENUMs enforce validity for these fields
       if (updates.period !== undefined) payload.period = updates.period;
       if (updates.priority !== undefined) payload.priority = updates.priority;
       if (updates.status !== undefined) payload.status = updates.status;
