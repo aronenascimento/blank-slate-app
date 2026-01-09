@@ -1,3 +1,4 @@
+void.">
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Task, Project, Status, Period, Priority, ProjectColor } from '@/types';
@@ -362,7 +363,9 @@ export const useSupabaseData = () => {
 
     // Project Handlers
     handleAddProject: addProjectMutation.mutate,
-    handleUpdateProject: updateProjectMutation.mutate,
+    handleUpdateProject: (projectId: string, updates: Partial<Project>) => {
+      updateProjectMutation.mutate({ projectId, updates });
+    },
     handleToggleProjectStatus: (projectId: string) => {
       const project = projectsQuery.data?.find(p => p.id === projectId);
       if (project) {
@@ -370,14 +373,18 @@ export const useSupabaseData = () => {
         updateProjectMutation.mutate({ projectId, updates: { status: newStatus } });
       }
     },
-    handleDeleteProject: deleteProjectMutation.mutate,
+    handleDeleteProject: (projectId: string) => {
+      deleteProjectMutation.mutate(projectId);
+    },
 
     // Task Handlers
     handleAddTask: addTaskMutation.mutate,
     handleUpdateTask: (taskId: string, updates: Partial<Task>) => {
       updateTaskMutation.mutate({ taskId, updates });
     },
-    handleDeleteTask: deleteTaskMutation.mutate,
+    handleDeleteTask: (taskId: string) => {
+      deleteTaskMutation.mutate(taskId);
+    },
     
     // Specific Task Updates (used by drag/drop and quick actions)
     handleTaskStatusChange: (taskId: string, status: Status) => {
