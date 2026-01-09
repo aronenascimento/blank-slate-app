@@ -1,14 +1,23 @@
 import { useAppData } from '@/components/MainLayout';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ListTodo, Plus, Pause, Play } from 'lucide-react';
+import { ArrowLeft, ListTodo, Plus, Pause, Play, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/TaskCard';
 import { cn } from '@/lib/utils';
 import { PROJECT_COLORS } from '@/types';
+import { ProjectDetailDialog } from '@/components/ProjectDetailDialog'; // Importado
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const { projects, tasks, handleTaskStatusChange, handleTaskPriorityChange, handleToggleProjectStatus } = useAppData();
+  const { 
+    projects, 
+    tasks, 
+    handleTaskStatusChange, 
+    handleTaskPriorityChange, 
+    handleToggleProjectStatus,
+    handleUpdateProject, // Necessário para o diálogo
+    handleDeleteProject, // Necessário para o diálogo
+  } = useAppData();
   const navigate = useNavigate();
 
   const project = projects.find(p => p.id === projectId);
@@ -57,6 +66,23 @@ const ProjectDetailPage = () => {
         </div>
         
         <div className="ml-auto flex gap-2">
+          {/* Botão de Editar Projeto (Abre o ProjectDetailDialog) */}
+          <ProjectDetailDialog
+            project={project}
+            onUpdateProject={handleUpdateProject}
+            onToggleStatus={handleToggleProjectStatus}
+            onDeleteProject={(id) => {
+              handleDeleteProject(id);
+              navigate('/projects'); // Redireciona após deletar
+            }}
+          >
+            <Button variant="outline">
+              <Edit className="w-4 h-4 mr-2" />
+              Editar Projeto
+            </Button>
+          </ProjectDetailDialog>
+          
+          {/* Botão de Pausar/Ativar Projeto */}
           <Button 
             variant={isActive ? "outline" : "default"} 
             onClick={() => handleToggleProjectStatus(project.id)}
