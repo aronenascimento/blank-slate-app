@@ -213,21 +213,27 @@ export const useSupabaseData = () => {
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
-      // Supabase expects deadline as an ISO string (date only)
-      const deadlineString = updates.deadline instanceof Date 
-        ? updates.deadline.toISOString().split('T')[0] 
-        : undefined;
-        
-      const payload = {
-        title: updates.title,
-        description: updates.description,
-        project_id: updates.projectId,
-        deadline: deadlineString,
-        period: updates.period,
-        priority: updates.priority,
-        status: updates.status,
-        is_archived: updates.isArchived,
-      };
+      
+      // Build payload dynamically, converting keys to snake_case for Supabase
+      const payload: Record<string, any> = {};
+      
+      if (updates.title !== undefined) payload.title = updates.title;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.projectId !== undefined) payload.project_id = updates.projectId;
+      if (updates.period !== undefined) payload.period = updates.period;
+      if (updates.priority !== undefined) payload.priority = updates.priority;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.isArchived !== undefined) payload.is_archived = updates.isArchived;
+      
+      // Handle deadline separately, ensuring it's formatted as a date string if present
+      if (updates.deadline instanceof Date) {
+        payload.deadline = updates.deadline.toISOString().split('T')[0];
+      }
+
+      if (Object.keys(payload).length === 0) {
+        // No updates to perform
+        return;
+      }
       
       const { data, error } = await supabase
         .from('tasks')
@@ -241,7 +247,9 @@ export const useSupabaseData = () => {
     },
     onSuccess: (updatedTask) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success(`Tarefa "${updatedTask.title}" atualizada.`);
+      if (updatedTask) {
+        toast.success(`Tarefa "${updatedTask.title}" atualizada.`);
+      }
     },
     onError: (error) => {
       toast.error(`Erro ao atualizar tarefa: ${error.message}`);
