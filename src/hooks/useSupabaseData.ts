@@ -282,7 +282,7 @@ export const useSupabaseData = () => {
           deadline: newTask.deadline.toISOString().split('T')[0], // Salva apenas a data (YYYY-MM-DD)
           period: newTask.period,
           priority: newTask.priority,
-          status: 'A FAZER',
+          status: 'BACKLOG', // Alterado de 'A FAZER' para 'BACKLOG'
           is_archived: false,
         })
         .select()
