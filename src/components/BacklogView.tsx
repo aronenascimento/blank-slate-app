@@ -13,6 +13,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { NewTaskRow } from './NewTaskRow'; // Importando o novo componente
+import { taskTitleSchema } from '@/lib/schemas'; // Importando o schema
 
 interface BacklogViewProps {
   tasks: Task[];
@@ -48,6 +49,7 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [titleValue, setTitleValue] = useState<string>('');
+  const [titleError, setTitleError] = useState<string | null>(null);
   
   const projectMap = new Map(projects.map(p => [p.id, p]));
 
@@ -75,6 +77,23 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
   const handleTitleEditClick = (taskId: string, currentTitle: string) => {
     setEditingTitle(taskId);
     setTitleValue(currentTitle);
+    setTitleError(null);
+  };
+  
+  const handleTitleUpdate = (taskId: string, currentTitle: string) => {
+    const result = taskTitleSchema.safeParse(titleValue.trim());
+    
+    if (!result.success) {
+      setTitleError(result.error.errors[0].message);
+      return;
+    }
+    
+    if (result.data !== currentTitle) {
+      onUpdateTask(taskId, { title: result.data });
+    }
+    
+    setEditingTitle(null);
+    setTitleError(null);
   };
 
   return (
@@ -160,27 +179,29 @@ export function BacklogView({ tasks, projects, onUpdateTask, onAddTask }: Backlo
                     {/* Título - edição inline */}
                     <td className="py-3 px-4">
                       {editingTitle === task.id ? (
-                        <Input
-                          value={titleValue}
-                          onChange={(e) => setTitleValue(e.target.value)}
-                          onBlur={() => {
-                            if (titleValue.trim() && titleValue !== task.title) {
-                              onUpdateTask(task.id, { title: titleValue.trim() });
-                            }
-                            setEditingTitle(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              if (titleValue.trim() && titleValue !== task.title) {
-                                onUpdateTask(task.id, { title: titleValue.trim() });
+                        <div className="space-y-1">
+                          <Input
+                            value={titleValue}
+                            onChange={(e) => {
+                              setTitleValue(e.target.value);
+                              setTitleError(null); // Clear error on change
+                            }}
+                            onBlur={() => handleTitleUpdate(task.id, task.title)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleTitleUpdate(task.id, task.title);
                               }
-                              setEditingTitle(null);
-                            }
-                            if (e.key === 'Escape') setEditingTitle(null);
-                          }}
-                          className="h-7 text-sm"
-                          autoFocus
-                        />
+                              if (e.key === 'Escape') {
+                                setEditingTitle(null);
+                                setTitleError(null);
+                              }
+                            }}
+                            className={cn("h-7 text-sm", titleError && "border-destructive")}
+                            autoFocus
+                          />
+                          {titleError && <p className="text-destructive text-xs">{titleError}</p>}
+                        </div>
                       ) : (
                         <span 
                           className={cn(

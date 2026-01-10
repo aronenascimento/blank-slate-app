@@ -85,22 +85,21 @@ const transformProfile = (p: SupabaseProfile): Profile => ({
 
 // --- Data Fetching ---
 
-const fetchProjects = async (userId: string): Promise<Project[]> => {
+// RLS ensures only the authenticated user's data is returned, so we remove redundant user_id filters.
+const fetchProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
-    .eq('user_id', userId)
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(error.message);
   return data.map(transformProject);
 };
 
-const fetchTasks = async (userId: string): Promise<Task[]> => {
+const fetchTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .eq('user_id', userId)
     .eq('is_archived', false) // Only fetch non-archived tasks
     .order('deadline', { ascending: true });
 
@@ -139,7 +138,7 @@ export const useSupabaseData = () => {
   // 2. Fetch Projects
   const projectsQuery = useQuery({
     queryKey: ['projects', userId],
-    queryFn: () => fetchProjects(userId!),
+    queryFn: fetchProjects, // No need for userId argument here, RLS handles it
     enabled: !!userId,
     initialData: [],
   });
@@ -147,7 +146,7 @@ export const useSupabaseData = () => {
   // 3. Fetch Tasks
   const tasksQuery = useQuery({
     queryKey: ['tasks', userId],
-    queryFn: () => fetchTasks(userId!),
+    queryFn: fetchTasks, // No need for userId argument here, RLS handles it
     enabled: !!userId,
     initialData: [],
   });
@@ -246,7 +245,10 @@ export const useSupabaseData = () => {
       // Use the secure database function to delete the project
       const { error } = await supabase.rpc('delete_project_by_owner', { project_id_in: projectId });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Throw a more specific error message for the toast handler
+        throw new Error(`Falha ao executar RPC de exclusão de projeto: ${error.message}`);
+      }
       return projectId;
     },
     onSuccess: (deletedProjectId) => {
@@ -275,7 +277,7 @@ export const useSupabaseData = () => {
     }) => {
       if (!userId) throw new Error('User not authenticated');
       
-      // The database ENUMs now enforce that period, priority, and status are valid strings.
+      // The database ENUMs and new CHECK constraints enforce validity for these fields.
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -312,7 +314,7 @@ export const useSupabaseData = () => {
       if (updates.title !== undefined) payload.title = updates.title;
       if (updates.description !== undefined) payload.description = updates.description;
       if (updates.projectId !== undefined) payload.project_id = updates.projectId;
-      // DB ENUMs enforce validity for these fields
+      // DB ENUMs and CHECK constraints enforce validity for these fields
       if (updates.period !== undefined) payload.period = updates.period;
       if (updates.priority !== undefined) payload.priority = updates.priority;
       if (updates.status !== undefined) payload.status = updates.status;
@@ -354,7 +356,10 @@ export const useSupabaseData = () => {
       // Use the secure database function to delete the task
       const { error } = await supabase.rpc('delete_task_by_owner', { task_id_in: taskId });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Throw a more specific error message for the toast handler
+        throw new Error(`Falha ao executar RPC de exclusão de tarefa: ${error.message}`);
+      }
       return taskId;
     },
     onSuccess: (deletedTaskId) => {

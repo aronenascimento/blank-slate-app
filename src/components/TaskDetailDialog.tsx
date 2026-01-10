@@ -24,14 +24,11 @@ import { ptBR } from 'date-fns/locale';
 import * as Lucide from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { taskTitleSchema, taskDescriptionSchema } from '@/lib/schemas';
 
 const taskSchema = z.object({
-  title: z.string()
-    .min(1, { message: 'O título é obrigatório.' })
-    .max(255, { message: 'O título não pode exceder 255 caracteres.' }),
-  description: z.string()
-    .max(1000, { message: 'A descrição não pode exceder 1000 caracteres.' })
-    .optional(),
+  title: taskTitleSchema,
+  description: taskDescriptionSchema,
   projectId: z.string().min(1, { message: 'O projeto é obrigatório.' }),
   deadline: z.date(),
   period: z.custom<Period>(),
