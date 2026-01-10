@@ -26,8 +26,12 @@ import { cn } from '@/lib/utils';
 import React from 'react';
 
 const taskSchema = z.object({
-  title: z.string().min(1, { message: 'O título é obrigatório.' }),
-  description: z.string().optional(),
+  title: z.string()
+    .min(1, { message: 'O título é obrigatório.' })
+    .max(255, { message: 'O título não pode exceder 255 caracteres.' }),
+  description: z.string()
+    .max(1000, { message: 'A descrição não pode exceder 1000 caracteres.' })
+    .optional(),
   projectId: z.string().min(1, { message: 'O projeto é obrigatório.' }),
   deadline: z.date(),
   period: z.custom<Period>(),
@@ -298,7 +302,7 @@ export function TaskDetailDialog({ task, project, projects, onUpdateTask, onDele
                 <Trash2 className="w-4 h-4 mr-2" />
                 Deletar
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={!form.formState.isValid}>
                 <Save className="w-4 h-4 mr-2" />
                 Salvar Alterações
               </Button>
