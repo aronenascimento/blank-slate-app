@@ -4,9 +4,10 @@ import { useEffect } from "react";
 const NotFound = () => {
   const location = useLocation();
 
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  // Removido o console.error para evitar a exposição de caminhos de URL em logs de produção.
+  // useEffect(() => {
+  //   console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+  // }, [location.pathname]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">

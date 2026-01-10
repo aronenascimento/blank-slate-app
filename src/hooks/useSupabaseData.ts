@@ -243,10 +243,8 @@ export const useSupabaseData = () => {
   
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projectId);
+      // Use the secure database function to delete the project
+      const { error } = await supabase.rpc('delete_project_by_owner', { project_id_in: projectId });
 
       if (error) throw new Error(error.message);
       return projectId;
@@ -353,10 +351,8 @@ export const useSupabaseData = () => {
   
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
+      // Use the secure database function to delete the task
+      const { error } = await supabase.rpc('delete_task_by_owner', { task_id_in: taskId });
 
       if (error) throw new Error(error.message);
       return taskId;
