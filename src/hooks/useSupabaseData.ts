@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 // Supabase returns dates as strings, and IDs as strings/UUIDs.
 interface SupabaseProject {
   id: string;
-  user_id: string;
   name: string;
   status: 'Ativo' | 'Pausado';
   color: ProjectColor;
@@ -17,7 +16,6 @@ interface SupabaseProject {
 
 interface SupabaseTask {
   id: string;
-  user_id: string;
   project_id: string;
   title: string;
   description: string | null;
@@ -89,7 +87,7 @@ const transformProfile = (p: SupabaseProfile): Profile => ({
 const fetchProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
     .from('projects')
-    .select('*')
+    .select('id, name, status, color, created_at') // Explicit selection
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(error.message);
@@ -99,7 +97,7 @@ const fetchProjects = async (): Promise<Project[]> => {
 const fetchTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select('id, project_id, title, description, deadline, period, priority, status, is_archived, created_at') // Explicit selection
     .eq('is_archived', false) // Only fetch non-archived tasks
     .order('deadline', { ascending: true });
 
@@ -110,7 +108,7 @@ const fetchTasks = async (): Promise<Task[]> => {
 const fetchProfile = async (userId: string): Promise<Profile | null> => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, first_name, last_name, avatar_url, updated_at') // Explicit selection
     .eq('id', userId)
     .single();
 
@@ -169,7 +167,7 @@ export const useSupabaseData = () => {
         .from('profiles')
         .update(payload)
         .eq('id', userId)
-        .select()
+        .select('id, first_name, last_name, avatar_url, updated_at') // Explicit selection
         .single();
 
       if (error) throw new Error(error.message);
@@ -198,7 +196,7 @@ export const useSupabaseData = () => {
           user_id: userId,
           status: 'Ativo',
         })
-        .select()
+        .select('id, name, status, color, created_at') // Explicit selection
         .single();
       
       if (error) throw new Error(error.message);
@@ -224,7 +222,7 @@ export const useSupabaseData = () => {
           status: updates.status,
         })
         .eq('id', projectId)
-        .select()
+        .select('id, name, status, color, created_at') // Explicit selection
         .single();
 
       if (error) throw new Error(error.message);
@@ -290,7 +288,7 @@ export const useSupabaseData = () => {
           status: 'BACKLOG', // DB default is now BACKLOG
           is_archived: false,
         })
-        .select()
+        .select('id, project_id, title, description, deadline, period, priority, status, is_archived, created_at') // Explicit selection
         .single();
 
       if (error) throw new Error(error.message);
@@ -334,7 +332,7 @@ export const useSupabaseData = () => {
         .from('tasks')
         .update(payload)
         .eq('id', taskId)
-        .select()
+        .select('id, project_id, title, description, deadline, period, priority, status, is_archived, created_at') // Explicit selection
         .single();
 
       if (error) throw new Error(error.message);
