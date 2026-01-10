@@ -21,7 +21,8 @@ export function KanbanView({ tasks, projects, onTaskStatusChange, onTaskPriority
     : ['BACKLOG', 'A FAZER', 'FAZENDO', 'EM APROVAÇÃO', 'TRAVADO'];
 
   const getTasksByStatus = (status: Status) => {
-    return tasks.filter(task => task.status === status && !task.isArchived);
+    // Tasks are already filtered for !isArchived by useSupabaseData
+    return tasks.filter(task => task.status === status);
   };
 
   return (

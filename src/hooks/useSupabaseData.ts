@@ -101,6 +101,7 @@ const fetchTasks = async (userId: string): Promise<Task[]> => {
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
+    .eq('is_archived', false) // Only fetch non-archived tasks
     .order('deadline', { ascending: true });
 
   if (error) throw new Error(error.message);

@@ -52,7 +52,8 @@ const MainLayout = () => {
     today.setHours(0, 0, 0, 0);
     const taskDate = new Date(task.deadline);
     taskDate.setHours(0, 0, 0, 0);
-    return taskDate < today && task.status !== 'FEITO' && !task.isArchived;
+    // tasks are already filtered for !isArchived by useSupabaseData
+    return taskDate < today && task.status !== 'FEITO';
   });
 
   if (isLoading) {

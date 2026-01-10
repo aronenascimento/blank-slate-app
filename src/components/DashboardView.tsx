@@ -21,23 +21,24 @@ export function DashboardView({ tasks, projects, onTaskStatusChange, onTaskPerio
   
   const periods: Period[] = ['Manhã', 'Tarde', 'Noite'];
 
+  // Tasks are already filtered for !isArchived by useSupabaseData
   const overdueTasks = tasks.filter(task => {
     const taskDate = new Date(task.deadline);
     taskDate.setHours(0, 0, 0, 0);
-    return taskDate < today && task.status !== 'FEITO' && !task.isArchived;
+    return taskDate < today && task.status !== 'FEITO';
   });
   
   const todayTasks = tasks.filter(task => {
     const taskDate = new Date(task.deadline);
     taskDate.setHours(0, 0, 0, 0);
     // Show tasks scheduled for today OR tasks currently being done (FAZENDO)
-    return (taskDate.getTime() === today.getTime() || task.status === 'FAZENDO') && !task.isArchived;
+    return taskDate.getTime() === today.getTime() || task.status === 'FAZENDO';
   });
 
   const tomorrowTasks = tasks.filter(task => {
     const taskDate = new Date(task.deadline);
     taskDate.setHours(0, 0, 0, 0);
-    return taskDate.getTime() === tomorrowDate.getTime() && task.status !== 'FEITO' && !task.isArchived;
+    return taskDate.getTime() === tomorrowDate.getTime() && task.status !== 'FEITO';
   });
 
   const getTasksByPeriod = (period: Period) => {

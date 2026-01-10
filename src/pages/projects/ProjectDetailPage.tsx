@@ -23,8 +23,9 @@ const ProjectDetailPage = () => {
   const project = projects.find(p => p.id === projectId);
   
   // Filter tasks for this project, sorted by deadline and priority
+  // Tasks are already filtered for !isArchived by useSupabaseData
   const projectTasks = tasks
-    .filter(t => t.projectId === projectId && !t.isArchived)
+    .filter(t => t.projectId === projectId)
     .sort((a, b) => {
       const dateA = new Date(a.deadline).getTime();
       const dateB = new Date(b.deadline).getTime();
