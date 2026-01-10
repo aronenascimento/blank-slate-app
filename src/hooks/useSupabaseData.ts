@@ -35,14 +35,6 @@ interface SupabaseProfile {
   updated_at: string;
 }
 
-export interface Profile {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  avatarUrl: string | null;
-  updatedAt: Date;
-}
-
 // Helper function to correctly parse YYYY-MM-DD date strings as local dates
 // This prevents timezone offsets from shifting the date back a day.
 const parseSupabaseDate = (dateString: string): Date => {
@@ -87,7 +79,7 @@ const transformProfile = (p: SupabaseProfile): Profile => ({
 const fetchProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, name, status, color, created_at') // Explicit selection
+    .select('id, name, status, color, created_at') // Explicit selection, excluding user_id
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(error.message);
@@ -97,7 +89,7 @@ const fetchProjects = async (): Promise<Project[]> => {
 const fetchTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
     .from('tasks')
-    .select('id, project_id, title, description, deadline, period, priority, status, is_archived, created_at') // Explicit selection
+    .select('id, project_id, title, description, deadline, period, priority, status, is_archived, created_at') // Explicit selection, excluding user_id
     .eq('is_archived', false) // Only fetch non-archived tasks
     .order('deadline', { ascending: true });
 
