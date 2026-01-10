@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Task, Project, Status, Period, Priority, ProjectColor } from '@/types';
+import { Task, Project, Status, Period, Priority, ProjectColor, Profile } from '@/types';
 import { useSession } from '@/components/SessionContextProvider';
 import { toast } from 'sonner';
 

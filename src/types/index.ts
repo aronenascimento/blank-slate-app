@@ -25,6 +25,14 @@ export interface Task {
   createdAt: Date;
 }
 
+export interface Profile {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
+  updatedAt: Date;
+}
+
 export const PRIORITY_CONFIG: Record<Priority, { label: string; icon: string; colorClass: string }> = {
   'Urgente': { label: 'Urgente', icon: 'Flame', colorClass: 'bg-priority-urgent/20 text-priority-urgent border-priority-urgent/30' },
   'Problemática': { label: 'Problemática', icon: 'Skull', colorClass: 'bg-priority-problematic/20 text-priority-problematic border-priority-problematic/30' },
