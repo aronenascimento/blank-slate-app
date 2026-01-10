@@ -6,6 +6,7 @@ import { Task, Status, Period, Priority, Project, ProjectColor } from '@/types';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { useSession } from './SessionContextProvider';
 import { MobileSidebar } from './MobileSidebar'; // Import MobileSidebar
+import { AlertTriangle } from 'lucide-react'; // Import AlertTriangle
 
 // Define the context type for components consuming app data
 interface AppDataContext {
@@ -30,6 +31,7 @@ const MainLayout = () => {
     tasks, 
     projects, 
     isLoading: isDataLoading,
+    isError: isDataError, // Capture isError
     handleTaskStatusChange, 
     handleTaskPeriodChange, 
     handleTaskPriorityChange,
@@ -60,6 +62,19 @@ const MainLayout = () => {
     return (
       <div className="min-h-screen flex items-center justify-center text-foreground">
         Carregando dados...
+      </div>
+    );
+  }
+  
+  // Handle data fetching errors
+  if (isDataError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-foreground p-8">
+        <AlertTriangle className="w-10 h-10 text-destructive mb-4" />
+        <h1 className="text-xl font-bold">Erro ao carregar dados</h1>
+        <p className="text-muted-foreground mt-2 text-center">
+          Não foi possível conectar ou carregar as tarefas e projetos. Verifique sua conexão ou as configurações do Supabase.
+        </p>
       </div>
     );
   }
